@@ -1,0 +1,9 @@
+# # 
+# Docker DNS Record
+# #
+# Host : {{ hostname }}
+# Container : {{ name }}
+# #
+
+host-record={{ fqdn }},{{ ip }}
+ptr-record={{ reverse_ip }},{{ fqdn }}
