@@ -31,7 +31,7 @@ def ndpproxy_loop():
                 ipn = IPNetwork(ip + '/64')
                 if ipn.network == lan.network:
                     if ip in cache_ip:
-                        #syslog.syslog("New IP {} already in cache".format(ip))
+                        syslog.syslog(syslog.LOG_DEBUG, "New IP {} already in cache".format(ip))
                         continue
                     else:
                         cache_ip.append(ip)
