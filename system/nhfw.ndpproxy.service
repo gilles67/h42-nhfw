@@ -1,0 +1,14 @@
+[Unit]
+Description=NodeHome Firewall NDP Proxy
+After=network-online.target
+ 
+[Service]
+Type=simple
+Environment=PYTHONPATH=$PYTHONPATH:/opt/h42-nhfw
+ExecStart=/usr/bin/python3 -m nhfw.ndpproxy
+PIDFile=/run/nhfw.ndpproxy.pid
+Restart=on-failure
+TimeoutStopSec=300
+ 
+[Install]
+WantedBy=multi-user.target
