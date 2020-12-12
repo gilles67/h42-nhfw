@@ -47,7 +47,8 @@ class DockContainer:
 
     def addToDnsAuthority(self, api):
         dns_data = self._init_data()
-        dns_data['cname'] = self.additionnalName
+        if self.additionnalName.count:
+            dns_data['cname'] = self.additionnalName
         return api.post('/dns/{}/docker/{}'.format(api.hostuuid, self.name), dns_data)
 
     def removeFromDnsAuthority(self, api):

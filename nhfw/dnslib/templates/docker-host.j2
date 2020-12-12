@@ -7,3 +7,9 @@
 
 host-record={{ fqdn }},{{ ip }}
 ptr-record={{ reverse_ip }},{{ fqdn }}
+{% if cname %}
+{% for item in cname %}
+cname={{ item }}, {{ fqdn }} 
+{% endfor%}
+{% endif %}
+
