@@ -4,7 +4,7 @@ After=network-online.target
  
 [Service]
 Type=simple
-Environment=PYTHONPATH=$PYTHONPATH:/opt/h42-nhfw
+Environment=PYTHONPATH=/opt/h42-nhfw
 ExecStart=/usr/bin/python3 -m nhfw.ndpproxy
 PIDFile=/run/nhfw.ndpproxy.pid
 Restart=on-failure

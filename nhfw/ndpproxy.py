@@ -1,23 +1,25 @@
-import os, time, netifaces, syslog
-from netaddr import IPNetwork
+from nhfw.logging import nhfwlog_name
+nhfwlog_name('nhfw.ndpproxy')
 from nhfw.daemon import fork_magic
 
-syslog.openlog('nhfw.ndpproxy')
-
 def ndpproxy_loop():
-    syslog.syslog("Started")
+    import os, time, netifaces
+    from netaddr import IPNetwork
+    from nhfw.logging import nhfwlog
+
+    nhfwlog.info("Started")
 
     ifip_lan = netifaces.ifaddresses('br0')[netifaces.AF_INET6][0]
     lan = IPNetwork( ifip_lan['addr'] + '/' + ifip_lan['netmask'])
     lannet = str(lan.network)[:-1]
 
-    syslog.syslog("Detect LAN side network {} : {} ".format('br0', lan.network))
+    nhfwlog.info("Detect LAN side network if={}, network={}".format('br0', lan.network))
 
     ifip_wan = netifaces.ifaddresses('enp4s0')[netifaces.AF_INET6][0]
     wan = IPNetwork( ifip_wan['addr'] + '/' + ifip_wan['netmask'])
     wannet = str(wan.network)[:-1]
 
-    syslog.syslog("Detect WAN side network {} : {} ".format('enp4s0', wan.network))
+    nhfwlog.info("Detect WAN side network if={}, network={}".format('enp4s0', wan.network))
 
     cache_ip = []
     try:
@@ -31,17 +33,18 @@ def ndpproxy_loop():
                 ipn = IPNetwork(ip + '/64')
                 if ipn.network == lan.network:
                     if ip in cache_ip:
-                        syslog.syslog(syslog.LOG_DEBUG, "New IP {} already in cache".format(ip))
+                        nhfwlog.debug("IP in cache ip={}".format(ip))
                         continue
                     else:
                         cache_ip.append(ip)
                         wanip = ip.replace(lannet, wannet)
-                        syslog.syslog("Add IP {} on {} for {}".format(wanip, 'enp4s0', ip))
-                        os.system('ip -6 neigh add proxy {} dev enp4s0'.format(wanip))
+                        cmdret = os.system('ip -6 neigh add proxy {} dev enp4s0'.format(wanip))
+                        nhfwlog.info("Add IP in proxy, wanif={}, wanip={}, lanip={}, return={}".format('enp4s0', wanip, ip, cmdret))
+
             ps.close()
             time.sleep(5)
     except KeyboardInterrupt:
-        syslog.syslog("Stopped")
+        nhfwlog.info("Stopped")
         exit(0)
 
 if __name__ == "__main__":
