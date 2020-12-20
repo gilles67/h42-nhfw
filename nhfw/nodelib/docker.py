@@ -1,4 +1,5 @@
-import docker, syslog, time
+import docker, time
+from nhfw.logging import nhfwlog
 from nhfw.models.container import NhfwContainer
 from nhfw.models.firewallrule import *
 from nhfw.firewall import *
@@ -18,10 +19,11 @@ def updateInventory(mynode, client):
             continue
         else:
             if not _checkBool(item.labels['one.h42.nhfw.enable']):
-                syslog.syslog("Skip Docker container name={}".format(name))
+                nhfwlog.debug("Skip Docker container name={}".format(name))
                 continue;
 
-        mycontainer = _updateContainer(mynode, dock, item.name)
+        mycontainer = _updateContainer(mynode, dock, item.name, reset_firewall=True)
+        
         
         client.routerUpdateContainer(mycontainer)
 
@@ -44,16 +46,15 @@ def containerChange(mynode, client):
 
             mycontainer = _updateContainer(mynode, dock, dtainer.name)
             
-            print("Update Docker container, name={}, status={}, tigger={}".format(mycontainer.name, mycontainer.status, event['status']))
+            nhfwlog.info("Update Docker container, name={}, status={}, tigger={}".format(mycontainer.name, mycontainer.status, event['status']))
             _applyFirewallRules(mycontainer)
-            syslog.syslog("Update Docker container, name={}, status={}, tigger={}".format(mycontainer.name, mycontainer.status, event['status']))
             client.routerUpdateContainer(mycontainer)
             print("End")
 
     dock.close()
 
 
-def _updateContainer(mynode, dock, name):
+def _updateContainer(mynode, dock, name, reset_firewall=False):
 
         networks_bridge = _getNetworkBridge(dock)        
 
@@ -91,17 +92,24 @@ def _updateContainer(mynode, dock, name):
         except:
             mycontainer.cnames = None
 
-        for fwitem in labels['nhfw']['firewall']['rule']:
-            myfwrule = _createFirewallRule(fwitem, labels['nhfw']['firewall']['rule'][fwitem])
-            mycontainer.addFirewallRule(myfwrule)
+        try:
+            if reset_firewall:
+                mycontainer.clearFirewallRules()
+            for fwitem in labels['nhfw']['firewall']['rule']:
+                myfwrule = _createFirewallRule(fwitem, labels['nhfw']['firewall']['rule'][fwitem], mycontainer)
+                if myfwrule:
+                    mycontainer.addFirewallRule(myfwrule)
+        except:
+            raise
+            
 
         # Save Container to DB
         if mycontainer.isNew:
             mynode.addContainer(mycontainer)
-            syslog.syslog("New Docker container, name={}".format(mycontainer.name))
+            nhfwlog.info("New Docker container, name={}".format(mycontainer.name))
         else:
             mycontainer.saveToDB()
-            syslog.syslog("Update Docker container, name={}".format(mycontainer.name))
+            nhfwlog.info("Update Docker container, name={}".format(mycontainer.name))
         
         return mycontainer
 
@@ -147,22 +155,26 @@ def _checkBool(value):
 # Firewall
 
 # Create Firewall rules
-def _createFirewallRule(name, data):
+def _createFirewallRule(name, data, container):
     fwrule = NhfwFirewallRule()
     fwrule.name = name
     topo = None
     if 'server' in data:
         topo = data['server']
         fwrule.type = FWR_DOCK_SERVER
+        fwrule.inif = 'wg0'
+        fwrule.outif = container.bridge
         if 'client' in topo:
             fwrule.src = topo['client']
     elif 'client' in data:
         topo = data['client']
         fwrule.type = FWR_DOCK_CLIENT
+        fwrule.inif = container.bridge
+        fwrule.outif = 'wg0'
         if 'server' in topo:
             fwrule.dst = topo['server']
     else: 
-        fwrule = None
+        return None
 
     if topo:
         if 'tcp' in topo:
@@ -183,11 +195,11 @@ def _applyFirewallRules(container):
         if container.isRunning:
             while not checkFilterRule(rule.fullname):
                 addFilterRule(rule)
-                print("Add try {}".format(rule))
+                nhfwlog.debug("Add try {}".format(rule))
                 time.sleep(1)
-            syslog.syslog("Add Firewall rule, {}".format(rule))
+            nhfwlog.info("Add Firewall rule, {}".format(rule))
         else:
             while checkFilterRule(rule.fullname):
                 deleteFilterRule(rule.fullname)
-                print("Delete try {}".format(rule))
-            syslog.syslog("Delete Firewall rule, {}".format(rule))
+                nhfwlog.debug("Delete try {}".format(rule))
+            nhfwlog.info("Delete Firewall rule, {}".format(rule))

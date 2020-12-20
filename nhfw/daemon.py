@@ -1,5 +1,5 @@
-import sys, os, syslog
-
+import sys, os
+from nhfw.logging import reset_logger
 
 def fork_magic(pid_file, main_exec):
     # first fork
@@ -29,5 +29,5 @@ def fork_magic(pid_file, main_exec):
         sys.stderr.write("fork magic #2 failed: {} ({})\n".format(ose.errno, ose.strerror))
         sys.exit(1)
 
-
+    reset_logger(forked=True)
     main_exec()

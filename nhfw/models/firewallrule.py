@@ -11,6 +11,8 @@ class NhfwFirewallRule:
     src = None
     dst = None
     trust = None
+    inif = None
+    outif = None
 
     def link(self, parent):
         self._parent = parent
@@ -24,7 +26,7 @@ class NhfwFirewallRule:
         return None
 
     def _serialize(self):
-        return { 'name': self.name, 'type': self.type, 'protocol': self.protocol, 'port': self.port, 'src': self.src,  'dst': self.dst ,  'trust': self.trust }
+        return { 'name': self.name, 'type': self.type, 'protocol': self.protocol, 'port': self.port, 'src': self.src,  'dst': self.dst ,  'trust': self.trust, 'inif': self.inif, 'outif': self.outif }
 
     def _deserialize(self, data, parent=None):
         if parent:
@@ -36,7 +38,14 @@ class NhfwFirewallRule:
         self.src = data['src']
         self.dst = data['dst']
         self.trust = data['trust']
+        if 'inif' in data:
+            self.inif = data['inif']
+        if 'outif' in data:
+            self.outif = data['outif']
         return self
+
+    def clone(self):
+        return NhfwFirewallRule()._deserialize(self._serialize(), parent=self._parent)
 
     def __repr__(self):
         if self.type == FWR_DOCK_CLIENT:

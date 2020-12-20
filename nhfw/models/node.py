@@ -1,3 +1,4 @@
+from datetime import datetime
 from tinydb import Query
 from nhfw.models.container import NhfwContainer
 
@@ -29,8 +30,9 @@ class NhfwNode:
         return { 'name': self.name, 'domain': self.domain, 'uuid': self.uuid, 'heartbeat': self.heartbeat }
 
     def _deserialize(self, data, db=None):
-        self._db = db
-        self._table = db.nodes
+        if db:
+            self._db = db
+            self._table = db.nodes
         self.name = data['name']
         self.domain = data['domain']
         self.uuid = data['uuid']
@@ -40,7 +42,7 @@ class NhfwNode:
 
     def saveToDB(self, db=None):
         self.heartbeat = str(datetime.utcnow().timestamp())
-        if db:
+        if self._table == None:
             self._db = db
             self._table = db.nodes
             self._table.insert(self._serialize())

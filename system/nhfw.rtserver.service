@@ -1,0 +1,14 @@
+[Unit]
+Description=NodeHome Router configuration server 
+After=network-online.target
+ 
+[Service]
+Type=simple
+Environment=PYTHONPATH=/opt/h42-nhfw
+ExecStart=/usr/bin/python3 -m nhfw.rtserver
+PIDFile=/run/nhfw.rtserver.pid
+Restart=on-failure
+TimeoutStopSec=300
+ 
+[Install]
+WantedBy=multi-user.target

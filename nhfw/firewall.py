@@ -13,14 +13,14 @@ def addFilterRule(rule, table='ufw6-user-forward'):
         return None
 
     if rule.type == FWR_DOCK_CLIENT:
-        chain_rule.in_interface = rule._parent.bridge
-        chain_rule.out_interface = 'wg0'
+        chain_rule.in_interface = rule.inif
+        chain_rule.out_interface = rule.outif
         chain_rule.src = rule._parent.ip
         chain_rule.dst = validate_address(rule.dst)
 
     elif rule.type == FWR_DOCK_SERVER:
-        chain_rule.in_interface = 'wg0'
-        chain_rule.out_interface = rule._parent.bridge
+        chain_rule.in_interface = rule.inif
+        chain_rule.out_interface = rule.outif
         chain_rule.src = validate_address(rule.src)
         chain_rule.dst = rule._parent.ip
 

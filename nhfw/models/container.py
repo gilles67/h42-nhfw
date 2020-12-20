@@ -30,6 +30,24 @@ class NhfwContainer:
         return self._node
 
     @property
+    def fqdn(self):
+        if self.node:
+            return self.hostname + '.' + self.domain
+        return None
+
+    @property
+    def hostname(self):
+        if self.node:
+            return self.name + "." + self.node.name
+        return None
+    
+    @property
+    def domain(self):
+        if self.node:
+            return self.node.domain
+        return None
+
+    @property
     def firewallRules(self):
         return self._fwrules
     
@@ -108,7 +126,7 @@ class NhfwContainer:
         self.heartbeat = str(datetime.utcnow().timestamp())
         if node: 
             self._node = node
-        if db:
+        if self._table == None:
             self._db = db
             self._table = db.containers
             self._table.insert(self._serialize())

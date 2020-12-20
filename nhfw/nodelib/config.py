@@ -4,8 +4,6 @@ from nhfw.config import NhfwConfigBase
 from nhfw.models.node import NhfwNode
 from tinydb import Query
 
-
-
 class NodelibConfig(NhfwConfigBase):
     CONFIG_FILE="/etc/nhfw/node.yml"
 
